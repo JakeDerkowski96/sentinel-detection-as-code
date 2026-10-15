@@ -6,6 +6,8 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-15
+
 ### Added
 - Repository scaffold: `content/` tree for analytics rules, functions, parsers, watchlists,
   automation rules, playbooks, workbooks, hunting queries and packages.
@@ -21,4 +23,5 @@ the project follows [Semantic Versioning](https://semver.org/).
 - Architecture decision records 0001 to 0007.
 - `AGENTS.md` guidance for AI agents operating in the repository.
 
-[Unreleased]: https://github.com/JakeDerkowski96/sentinel-detection-as-code/commits/main
+[Unreleased]: https://github.com/JakeDerkowski96/sentinel-detection-as-code/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/JakeDerkowski96/sentinel-detection-as-code/releases/tag/v0.1.0
