@@ -1,0 +1,109 @@
+# Pull-request gate: lint, type-check, test the tooling, validate all content,
+# and scan for secrets. The `gate` job is the single required status check for
+# branch protection, so adding or renaming jobs never requires touching settings.
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Cancel superseded PR runs; never cancel a run on main.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  lint:
+    name: Lint and type-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: mypy
+
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: pytest -q
+
+  content:
+    name: Validate content
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e .
+      # --strict: warnings (unused dependency, missing tests, expired exception) fail the
+      # build too, so metadata the agent reasons over cannot silently rot.
+      - name: Validate schemas and cross-references
+        run: dac-validate validate --strict --format markdown --summary-file "$GITHUB_STEP_SUMMARY"
+      - name: Build coverage index
+        run: dac-validate index
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-index
+          path: build/coverage-index.json
+          if-no-files-found: error
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # scan history, not just the tip
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  gate:
+    name: validate-gate
+    if: always()
+    needs: [lint, test, content, secrets]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Report results
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          {
+            echo "## Validation gate"
+            echo
+            echo "| Job | Result |"
+            echo "|---|---|"
+            echo "| Lint and type-check | ${{ needs.lint.result }} |"
+            echo "| Unit tests | ${{ needs.test.result }} |"
+            echo "| Validate content | ${{ needs.content.result }} |"
+            echo "| Secret scan | ${{ needs.secrets.result }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          for r in $RESULTS; do
+            if [ "$r" != "success" ]; then
+              echo "::error::One or more required jobs did not succeed: $RESULTS"
+              exit 1
+            fi
+          done
