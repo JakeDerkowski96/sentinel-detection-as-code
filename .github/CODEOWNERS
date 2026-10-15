@@ -1,0 +1,10 @@
+# Default owner for everything.
+*                       @JakeDerkowski96
+
+# Human-only paths. The AI agent's GitHub App is not permitted to modify these
+# (policy/proposal-limits.yaml), and CODEOWNERS makes review explicit once a
+# second maintainer exists. They define the rules the agent must obey.
+/policy/                @JakeDerkowski96
+/schemas/               @JakeDerkowski96
+/.github/               @JakeDerkowski96
+/src/                   @JakeDerkowski96
