@@ -26,6 +26,7 @@ as a pull request a human can review.
 | `schemas/` | JSON Schemas for every structured file |
 | `policy/` | Machine-readable tuning thresholds, proposal limits, lifecycle and taxonomy |
 | `tenants/overrides/` | Tenant-local differences, expressed as overrides never copies |
+| `scripts/` | `apply_repo_settings.sh`: applies repository settings and branch protection with `gh` |
 | `src/dac_validate/` | The validator and index builder CI runs |
 | `docs/` | Design, conventions and decision records |
 

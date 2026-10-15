@@ -17,6 +17,7 @@ the project follows [Semantic Versioning](https://semver.org/).
 - Synthetic example content: three analytics rules, one function, one parser, one watchlist,
   one hunting query, three packages, one tenant override.
 - CI workflow: lint, type-check, unit tests, content validation, secret scan, single gate job.
+- `scripts/apply_repo_settings.sh` to apply repository settings and branch protection (supports `--dry-run`).
 - Architecture decision records 0001 to 0007.
 - `AGENTS.md` guidance for AI agents operating in the repository.
 
